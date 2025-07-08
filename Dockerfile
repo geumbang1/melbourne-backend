@@ -1,18 +1,18 @@
 FROM php:8.1-apache
 
-# PHP 확장 설치 (필요 시)
-RUN docker-php-ext-install mysqli
+# 필수 패키지 설치
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    && docker-php-ext-install pdo pdo_mysql
 
-# DocumentRoot를 public으로 설정
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+# public 디렉토리를 아파치 루트로 설정
+COPY public/ /var/www/html/
+COPY --chown=www-data:www-data public/ /var/www/html/
 
-# Apache 설정 파일의 DocumentRoot 경로도 수정
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf \
-    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf \
-    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
+# 아파치 DocumentRoot 설정 보완 (필요 시)
+# RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf
 
-# 코드 복사
-COPY . /var/www/html
-
-# 포트 설정
 EXPOSE 80
